@@ -1,0 +1,27 @@
+[package]
+name = "magiv2"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+figlet-rs = "0.1.5"
+ratatui = "0.28.1"
+os_info = "3"
+pnet = "0.35.0"
+reqwest = "0.12.7"
+tokio = { version = "1.40.0", features = ["full"] }
+winapi = { version = "0.3.9", features = ["shellapi", "winuser", "securitybaseapi", "minwinbase"] }
+encoding_rs = "0.8.34"
+chardet = "0.2"
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winres = "0.1.12"
+
+[package.metadata.winres]
+manifest = "app.manifest"
+
+[build]
+target = "x86_64-pc-windows-msvc"
