@@ -2,24 +2,24 @@
 
 use figlet_rs::FIGfont;
 use ratatui::{
-    buffer::Buffer, layout::{Constraint, Layout, Rect}, style::{Color, Modifier, Style}, symbols::border::THICK, widgets::{Block, Borders, List, ListItem, Paragraph, Widget}, Frame
+    buffer::Buffer, layout::{Constraint, Layout, Rect}, style::{Color, Modifier, Style}, symbols::border::THICK, text::Text, widgets::{Block, Borders, List, ListItem, Paragraph, Widget}, Frame
 };
 
-use crate::app::{handlers::time_compile, net::base, widgets::app::{App, KeyboardEvent, RunningState, States, WidgetKind}};
+use crate::app::{net::base, widgets::{app::{App, KeyboardEvent, RunningState, States, WidgetKind}, cross_compile::CrossCompile, map::MapS, net::NetWidget, settings::Settings, utils::Utils}};
 
 // Меню (Добавить FIREWALL)
-const MENU_ITEMS: [&str; 4] = ["CrossCompile", "Net", "Utils", "Settings"];
+const MENU_ITEMS: [&str; 5] = ["Manual", "CrossCompile", "Net", "Utils", "Settings"];
 
 // Имплементируем рендеринг виджета
 impl Widget for &App<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // Разделение окна
         let splited_area =
-            Layout::horizontal([Constraint::Percentage(15), Constraint::Percentage(85)])
+            Layout::horizontal([Constraint::Length(14), Constraint::Min(0)])
                 .split(area);
 
         // Созданме меню
-        self.crate_menu().render(splited_area[0], buf);
+        self.crate_menu(self.state.widget_active).render(splited_area[0], buf);
 
 
         // Отображение flf
@@ -29,12 +29,32 @@ impl Widget for &App<'_> {
         ]).split(splited_area[1]);
         let fig_default = FIGfont::standard().unwrap();
         let fig = FIGfont::from_file(r"C:\Program Files\LocalX\Fonts\ANSI.flf").unwrap_or(fig_default);
-        let text = format!("{}", fig.convert("NETSEC").unwrap());
+        let text = Text::styled(format!("{}", fig.convert("DewLor").unwrap()), Style::default().fg(Color::LightMagenta));
         Paragraph::new(text).centered().block(Block::default().border_set(THICK).borders(Borders::ALL)).render(widgets_area[0], buf);
 
         //  Виджеты под меню (Здесь как раз надо сделать обработчик выбора виджета, то-есть в зависимости от того какой виджет бдует рендериться именно этот виджет поверх дефолтного)
-        // TEST WIDGET
-        Paragraph::new("PRE-BUILD VERSION").centered().block(Block::default().border_set(THICK).borders(Borders::ALL)).render(widgets_area[1], buf);
+        match &self.state.widget_kind {
+            WidgetKind::NoneActive => {
+                Paragraph::new("PRE-BUILD VERSION").centered().block(Block::default().border_set(THICK).borders(Borders::ALL)).render(widgets_area[1], buf);
+            },
+            WidgetKind::CrossCompile(widget) => {
+                todo!();
+            },
+            WidgetKind::Net(widget) => {
+                widget.render(widgets_area[1], buf);
+            },
+            WidgetKind::Utils(widget) => {
+                let a = MapS::new();
+                a.render(widgets_area[1], buf);
+
+            },
+            WidgetKind::Settings(widget) => {
+                todo!();
+            },
+        }
+
+        // // TEST WIDGET
+        // Paragraph::new("PRE-BUILD VERSION").centered().block(Block::default().border_set(THICK).borders(Borders::ALL)).render(widgets_area[1], buf);
     }
 }
 
@@ -73,7 +93,7 @@ impl<'a> App<'a> {
     }
 
     // Создание меню
-    pub fn crate_menu(&self) -> List<'_> {
+    pub fn crate_menu(&self, active: bool) -> List<'_> {
         let items: Vec<ListItem> = self.items.iter()
             .enumerate().map(|(i, item)| {
                 let style = if i == self.selected {
@@ -85,59 +105,92 @@ impl<'a> App<'a> {
                 };
                 ListItem::new(*item).style(style)
             }).collect();
+        let list_style = if active {
+            Style::default()
+        } else {
+            Style::default().fg(Color::LightYellow)
+        };
         let list = List::new(items)
-            .block(Block::default().border_set(THICK).borders(Borders::ALL).title("LocalX"))
-            .highlight_style(Style::default().fg(Color::Yellow))
+            .block(Block::default().border_set(THICK).borders(Borders::ALL).border_style(list_style).title("LocalX"))
             .highlight_symbol(">");
         list
+    }
+
+    pub fn hande_widget_up(&mut self) {
+        match &mut self.state.widget_kind {
+            WidgetKind::NoneActive => {},
+            WidgetKind::CrossCompile(cross_compile) => {},
+            WidgetKind::Net(net_widget) => net_widget.previous(),
+            WidgetKind::Utils(utils) => {},
+            WidgetKind::Settings(settings) => {},
+        }
+    }
+
+    pub fn handle_widget_down(&mut self) {
+        match &mut self.state.widget_kind {
+            WidgetKind::NoneActive => {},
+            WidgetKind::CrossCompile(cross_compile) => todo!(),
+            WidgetKind::Net(net_widget) => net_widget.next(),
+            WidgetKind::Utils(utils) => {},
+            WidgetKind::Settings(settings) => {},
+        }
     }
 
     // Обновленеи состояний KeyboardEvent matching
     pub fn update(&mut self, event: KeyboardEvent) -> Option<KeyboardEvent> {
         match event {
             KeyboardEvent::Up => {
-                // Пока перемещаемся по меню
-                self.previous();
+                if !self.state.widget_active {
+                    self.previous();
+                } else {
+                    self.hande_widget_up();
+                }
             }
 
             KeyboardEvent::Down => {
-                self.next();
+                if !self.state.widget_active {
+                    self.next();
+                } else {
+                    self.handle_widget_down();
+                }
             }
 
             // Воход в виджет, иная реализация нежеле в первой версии
             KeyboardEvent::Enter => {
-                self.state.widget_active = true;
-
-                let data = time_compile::get_os_info();
-                match self.selected {
-                    0 => self.state.widget_kind = WidgetKind::CrossCompile
-                        {   os_name: data.0,
-                            os_version: data.1,
-                            os_bitness: data.2,
-                            os_arch: data.3     },
-                    1 => self.state.widget_kind = WidgetKind::Net { interfaces: base::get_interface() },
-                    2 => self.state.widget_kind = WidgetKind::Utils,
-                    3 => self.state.widget_kind = WidgetKind::Settings,
-                    _ => panic!("Ошибка определения состояния виджета"),
-
+                let active_state_after_enter = &self.state.widget_kind;
+                if active_state_after_enter == &WidgetKind::NoneActive {
+                    self.state.widget_active = true;
+                    match self.selected {
+                        0 => {},
+                        1 => self.state.widget_kind = WidgetKind::CrossCompile(CrossCompile::new()),
+                        2 => self.state.widget_kind = WidgetKind::Net(NetWidget::new(base::get_interface())),
+                        3 => self.state.widget_kind = WidgetKind::Utils(Utils::new()),
+                        4 => self.state.widget_kind = WidgetKind::Settings(Settings::new()),
+                        _ => panic!("Ошибка определения состояния виджета"),
+                    }
+                } else {
+                    println!("Бублик");
                 }
             }
             KeyboardEvent::Out => {
                 self.state.widget_active = false;
-
-                match self.state.widget_kind {
+                match &self.state.widget_kind {
                     WidgetKind::NoneActive => {},
-                    WidgetKind::CrossCompile { os_name: _, os_version: _, os_bitness: _, os_arch: _ } => {
-                        self.selected = 0;
-                    },
-                    WidgetKind::Net { interfaces: _ } => {
+                    WidgetKind::CrossCompile(widget) => {
                         self.selected = 1;
+                        self.state.widget_kind = WidgetKind::NoneActive;
                     },
-                    WidgetKind::Utils => {
+                    WidgetKind::Net(widget) => {
                         self.selected = 2;
+                        self.state.widget_kind = WidgetKind::NoneActive;
                     },
-                    WidgetKind::Settings => {
+                    WidgetKind::Utils(widget) => {
                         self.selected = 3;
+                        self.state.widget_kind = WidgetKind::NoneActive;
+                    },
+                    WidgetKind::Settings(widget) => {
+                        self.selected = 4;
+                        self.state.widget_kind = WidgetKind::NoneActive;
                     },
                 }
             }

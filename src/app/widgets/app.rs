@@ -1,9 +1,11 @@
 use pnet::datalink::NetworkInterface;
 
+use super::{cross_compile::CrossCompile, net::NetWidget, settings::Settings, utils::Utils};
+
 // Основной виджет
 #[derive(Debug)]
 pub struct App<'a> {
-    pub items: [&'a str; 4],
+    pub items: [&'a str; 5],
     pub selected: usize,
 
     pub running_state: RunningState,
@@ -28,17 +30,10 @@ pub struct States {
 pub enum WidgetKind {
     #[default]
     NoneActive, // Нет активного виджета
-    CrossCompile {
-        os_name: String,
-        os_version: String,
-        os_bitness: String,
-        os_arch: String,
-    },
-    Net {
-        interfaces: NetworkInterface,
-    },
-    Utils,
-    Settings,
+    CrossCompile(CrossCompile),
+    Net(NetWidget),
+    Utils(Utils),
+    Settings(Settings),
 }
 
 #[derive(PartialEq)]
