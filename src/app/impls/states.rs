@@ -1,4 +1,4 @@
-use crate::app::widgets::{app::{States, WidgetKind}, net::NetWidget};
+use crate::app::widgets::app::{States, WidgetKind};
 
 impl States {
     pub fn new() -> States {

@@ -37,7 +37,7 @@ impl MapS {
                     color: Color::Green,
                     resolution: MapResolution::High,
                 });
-                ctx.print(self.x, self.y, "".yellow());
+                ctx.print(self.x, self.y, "X".yellow());
             })
             .x_bounds([-180.0, 180.0])
             .y_bounds([-90.0, 90.0])

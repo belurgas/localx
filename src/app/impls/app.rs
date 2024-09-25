@@ -5,10 +5,7 @@ use ratatui::{
     buffer::Buffer, layout::{Constraint, Layout, Rect}, style::{Color, Modifier, Style}, symbols::border::THICK, text::Text, widgets::{Block, Borders, List, ListItem, Paragraph, Widget}, Frame
 };
 
-use crate::app::{net::base, widgets::{app::{App, KeyboardEvent, RunningState, States, WidgetKind}, cross_compile::CrossCompile, map::MapS, net::NetWidget, settings::Settings, utils::Utils}};
-
-// Меню (Добавить FIREWALL)
-const MENU_ITEMS: [&str; 5] = ["Manual", "CrossCompile", "Net", "Utils", "Settings"];
+use crate::app::{localization::{set_locale_language, Local, en::MENU_ITEMS_EN, ru::MENU_ITEMS_RU}, net::base, widgets::{app::{App, KeyboardEvent, RunningState, States, WidgetKind}, cross_compile::CrossCompile, net::NetWidget, settings::Settings, utils::Utils}};
 
 // Имплементируем рендеринг виджета
 impl Widget for &App<'_> {
@@ -38,18 +35,17 @@ impl Widget for &App<'_> {
                 Paragraph::new("PRE-BUILD VERSION").centered().block(Block::default().border_set(THICK).borders(Borders::ALL)).render(widgets_area[1], buf);
             },
             WidgetKind::CrossCompile(widget) => {
-                todo!();
+                widget.render(widgets_area[1], buf);
             },
             WidgetKind::Net(widget) => {
                 widget.render(widgets_area[1], buf);
             },
             WidgetKind::Utils(widget) => {
-                let a = MapS::new();
-                a.render(widgets_area[1], buf);
+                widget.render(widgets_area[1], buf);
 
             },
             WidgetKind::Settings(widget) => {
-                todo!();
+                widget.render(widgets_area[1], buf);
             },
         }
 
@@ -61,8 +57,13 @@ impl Widget for &App<'_> {
 impl<'a> App<'a> {
     // Методы App
     pub fn new() -> App<'a> {
+        let locale = set_locale_language();
+        let items = match locale {
+            Local::Russian => MENU_ITEMS_RU,
+            Local::English => MENU_ITEMS_EN,
+        };
         App {
-            items: MENU_ITEMS,
+            items: items,
             selected: 0,
             running_state: RunningState::Running,
             state: States::new(),

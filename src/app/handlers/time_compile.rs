@@ -3,6 +3,8 @@
 
 use os_info;
 
+
+// Переписать, адаптировать
 pub fn get_os_info() -> (String, String, String, String) {
     let info = os_info::get();
     // let os = info.edition();

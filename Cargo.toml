@@ -13,7 +13,8 @@ os_info = "3"
 pnet = "0.35.0"
 reqwest = "0.12.7"
 tokio = { version = "1.40.0", features = ["full"] }
-winapi = { version = "0.3.9", features = ["shellapi", "winuser", "securitybaseapi", "minwinbase"] }
+winapi = { version = "0.3.9", features = ["shellapi", "winuser", "securitybaseapi",
+                                          "minwinbase", "winnls", "winnt"] }
 encoding_rs = "0.8.34"
 chardet = "0.2"
 

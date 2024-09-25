@@ -1,5 +1,3 @@
-use pnet::datalink::NetworkInterface;
-
 use super::{cross_compile::CrossCompile, net::NetWidget, settings::Settings, utils::Utils};
 
 // Основной виджет
