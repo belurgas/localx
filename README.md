@@ -1,4 +1,4 @@
-<h1>Magic Net<br>Developed by <a href="https://daniilshat.ru/" target="_blank">NETSEC</a> </h1>
+<h1>Magic Net<br>Developed by <a href="https://dewlor.ru/" target="_blank">DewLor</a> </h1>
 
 
 #### Languages
